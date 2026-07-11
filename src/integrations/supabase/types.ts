@@ -317,7 +317,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
-          level: string
+          level?: string
           name: string
           slug: string
           sort_order?: number
