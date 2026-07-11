@@ -1,0 +1,39 @@
+# ExamPass AI v1.0 Launch Checklist
+
+## Authentication
+- [ ] Sign up
+- [ ] Login
+- [ ] Logout
+- [ ] Forgot password
+
+## Dashboard
+- [ ] Loads correctly
+- [ ] Mobile responsive
+
+## AI Tutor
+- [ ] Chat works
+- [ ] Responses are relevant
+
+## Quiz
+- [ ] Start quiz
+- [ ] Submit quiz
+- [ ] View explanations
+- [ ] XP awarded
+
+## PDF Upload
+- [ ] Upload works
+- [ ] AI reads PDF
+- [ ] Quiz generated
+
+## Progress
+- [ ] Statistics update
+- [ ] XP updates
+- [ ] Streak updates
+
+## Deployment
+- [ ] Vercel works
+- [ ] HTTPS works
+
+## Performance
+- [ ] Homepage loads quickly
+- [ ] Mobile experience is smooth
