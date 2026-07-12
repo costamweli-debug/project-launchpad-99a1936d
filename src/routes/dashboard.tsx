@@ -48,7 +48,19 @@ function DashboardPage() {
   });
   const { data: subjectsData } = useQuery({
     queryKey: ["subjects"],
-    queryFn: () => fetchSubjects(),
+    queryFn: async () => {
+      try {
+        return await fetchSubjects();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[Dashboard] Failed to fetch curriculum_subjects", {
+          table: "curriculum_subjects",
+          message,
+          error,
+        });
+        throw error;
+      }
+    },
   });
 
   const subjects = subjectsData?.subjects ?? [];
