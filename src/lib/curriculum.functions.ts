@@ -33,7 +33,20 @@ export const listSubjects = createServerFn({ method: "GET" })
       .select("*")
       .eq("active", true)
       .order("sort_order", { ascending: true });
-    if (error) throw error;
+    if (error) {
+      console.error("[Dashboard curriculum fetch] curriculum_subjects query failed", {
+        table: "curriculum_subjects",
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(
+        `curriculum_subjects query failed: ${error.message}${error.code ? ` (${error.code})` : ""}${
+          error.hint ? ` Hint: ${error.hint}` : ""
+        }`,
+      );
+    }
     return { subjects: (data ?? []) as CurriculumSubject[] };
   });
 
@@ -50,7 +63,22 @@ export const listTopics = createServerFn({ method: "POST" })
       .eq("level", data.level)
       .eq("active", true)
       .order("sort_order", { ascending: true });
-    if (error) throw error;
+    if (error) {
+      console.error("[Dashboard curriculum fetch] curriculum_topics query failed", {
+        table: "curriculum_topics",
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        subjectId: data.subjectId,
+        level: data.level,
+      });
+      throw new Error(
+        `curriculum_topics query failed: ${error.message}${error.code ? ` (${error.code})` : ""}${
+          error.hint ? ` Hint: ${error.hint}` : ""
+        }`,
+      );
+    }
     return { topics: (rows ?? []) as CurriculumTopic[] };
   });
 
