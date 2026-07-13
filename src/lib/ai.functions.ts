@@ -65,7 +65,9 @@ async function callAI(messages: Array<{ role: string; content: string }>, model 
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
   const parts = data.candidates?.[0]?.content?.parts ?? [];
-  return parts.map((p) => p.text ?? "").join("").trim();
+  const raw = parts.map((p) => p.text ?? "").join("").trim();
+  // Gemini sometimes wraps JSON in ```json fences even when not asked to.
+  return raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
 }
 
 const quizQuestionSchema = z.object({
