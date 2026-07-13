@@ -178,8 +178,8 @@ export const Route = createFileRoute("/api/chat")({
             }
           }
 
-          const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
-          const model = gateway("google/gemini-3-flash-preview");
+          const gemini = createGeminiProvider(GEMINI_API_KEY);
+          const model = gemini("gemini-2.0-flash");
 
           const systemPrompt = attachmentContext
             ? `${GENERAL_SYSTEM}\n\nThe user has attached the following file(s). Use them as authoritative context for this turn. When they ask to summarize, explain, or generate a quiz, base your answer on the attachment content.\n\n${attachmentContext}`
