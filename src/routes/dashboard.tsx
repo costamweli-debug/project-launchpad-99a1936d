@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { StudyHub } from "@/components/StudyHub";
 
 
 export const Route = createFileRoute("/dashboard")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Dashboard — ExamPass AI" },
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/dashboard")({
   }),
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   component: DashboardPage,
