@@ -47,31 +47,15 @@ When the user asks for a quiz (from a topic, PDF, or image):
 
 async function generateSmartTitle(apiKey: string, userMsg: string, assistantMsg: string): Promise<string | null> {
   try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
-          },
-          {
-            role: "user",
-            content: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
-          },
-        ],
-        max_tokens: 30,
-        temperature: 0.4,
-      }),
+    const google = createGoogleGenerativeAI({ apiKey });
+    const { text } = await generateText({
+      model: google("gemini-2.0-flash"),
+      system:
+        "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
+      prompt: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
+      temperature: 0.4,
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const raw = data.choices?.[0]?.message?.content?.trim();
+    const raw = text?.trim();
     if (!raw) return null;
     return raw.replace(/^["'`]|["'`]$/g, "").replace(/\.$/, "").slice(0, 60);
   } catch {
