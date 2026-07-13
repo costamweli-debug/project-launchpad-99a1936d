@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_MODEL = "gemini-2.0-flash";
 
 type Level = "NSSCO" | "AS";
 
@@ -25,27 +25,49 @@ function levelGuidance(level: Level) {
   };
 }
 
-async function callAI(messages: Array<{ role: string; content: string }>, model = "google/gemini-3-flash-preview") {
-  const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-  if (!LOVABLE_API_KEY) throw new Error("AI service not configured");
+async function callAI(messages: Array<{ role: string; content: string }>, model = GEMINI_MODEL) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) throw new Error("AI service not configured: missing GEMINI_API_KEY");
 
-  const response = await fetch(LOVABLE_AI_URL, {
+  // Convert OpenAI-style messages to Gemini format.
+  // Gemini uses `systemInstruction` separately and `contents` with role user|model.
+  const systemParts = messages
+    .filter((m) => m.role === "system")
+    .map((m) => m.content)
+    .join("\n\n");
+
+  const contents = messages
+    .filter((m) => m.role !== "system")
+    .map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+
+  const response = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ model, messages, temperature: 0.4 }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents,
+      ...(systemParts ? { systemInstruction: { parts: [{ text: systemParts }] } } : {}),
+      generationConfig: { temperature: 0.4 },
+    }),
   });
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("AI gateway error:", response.status, text);
+    console.error("Gemini API error:", response.status, text);
     throw new Error(`AI service error: ${response.status}`);
   }
 
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  const data = (await response.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const raw = parts.map((p) => p.text ?? "").join("").trim();
+  // Gemini sometimes wraps JSON in ```json fences even when not asked to.
+  return raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
 }
 
 const quizQuestionSchema = z.object({

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, generateText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createGeminiProvider } from "@/lib/ai-gateway.server";
 import type { Database } from "@/integrations/supabase/types";
 
 const GENERAL_SYSTEM = `You are ExamPass AI — a Smart Tutor for Namibian NSSCO & AS Level students. You behave like a top student guiding a peer to think better: clear, strategic, slightly strict, focused on real improvement. Never warm-fuzzy, never condescending, never rambling.
@@ -47,31 +47,15 @@ When the user asks for a quiz (from a topic, PDF, or image):
 
 async function generateSmartTitle(apiKey: string, userMsg: string, assistantMsg: string): Promise<string | null> {
   try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
-          },
-          {
-            role: "user",
-            content: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
-          },
-        ],
-        max_tokens: 30,
-        temperature: 0.4,
-      }),
+    const gemini = createGeminiProvider(apiKey);
+    const { text } = await generateText({
+      model: gemini("gemini-2.0-flash"),
+      system:
+        "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
+      prompt: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
+      temperature: 0.4,
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const raw = data.choices?.[0]?.message?.content?.trim();
+    const raw = text?.trim();
     if (!raw) return null;
     return raw.replace(/^["'`]|["'`]$/g, "").replace(/\.$/, "").slice(0, 60);
   } catch {
@@ -93,9 +77,15 @@ export const Route = createFileRoute("/api/chat")({
 
           const SUPABASE_URL = process.env.SUPABASE_URL;
           const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-          const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-          if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !LOVABLE_API_KEY) {
+          const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+          if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
             return new Response("Server misconfigured", { status: 500 });
+          }
+          if (!GEMINI_API_KEY) {
+            return new Response(
+              JSON.stringify({ error: "AI service not configured: missing GEMINI_API_KEY" }),
+              { status: 500, headers: { "content-type": "application/json" } },
+            );
           }
 
           const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -188,8 +178,8 @@ export const Route = createFileRoute("/api/chat")({
             }
           }
 
-          const gateway = createLovableAiGatewayProvider(LOVABLE_API_KEY);
-          const model = gateway("google/gemini-3-flash-preview");
+          const gemini = createGeminiProvider(GEMINI_API_KEY);
+          const model = gemini("gemini-2.0-flash");
 
           const systemPrompt = attachmentContext
             ? `${GENERAL_SYSTEM}\n\nThe user has attached the following file(s). Use them as authoritative context for this turn. When they ask to summarize, explain, or generate a quiz, base your answer on the attachment content.\n\n${attachmentContext}`
@@ -216,7 +206,7 @@ export const Route = createFileRoute("/api/chat")({
                 // Smart AI title on the first exchange
                 const meta = thread as { _firstTurn?: boolean; _userText?: string };
                 if (meta._firstTurn && meta._userText) {
-                  const smart = await generateSmartTitle(LOVABLE_API_KEY, meta._userText, text);
+                  const smart = await generateSmartTitle(GEMINI_API_KEY, meta._userText, text);
                   if (smart) {
                     await supabase
                       .from("chat_threads")
