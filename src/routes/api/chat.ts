@@ -77,9 +77,15 @@ export const Route = createFileRoute("/api/chat")({
 
           const SUPABASE_URL = process.env.SUPABASE_URL;
           const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-          const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-          if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !LOVABLE_API_KEY) {
+          const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+          if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
             return new Response("Server misconfigured", { status: 500 });
+          }
+          if (!GEMINI_API_KEY) {
+            return new Response(
+              JSON.stringify({ error: "AI service not configured: missing GEMINI_API_KEY" }),
+              { status: 500, headers: { "content-type": "application/json" } },
+            );
           }
 
           const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
