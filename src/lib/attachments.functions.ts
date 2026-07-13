@@ -2,11 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_MODEL = "gemini-2.0-flash";
 const MAX_STORED_TEXT = 40_000;
 
 /**
- * OCR / describe an image using the Lovable AI Gateway (Gemini vision).
+ * OCR / describe an image using the Gemini API directly (vision).
  * Accepts a data URL (data:image/...;base64,...).
  */
 export const extractImageText = createServerFn({ method: "POST" })
@@ -20,32 +20,37 @@ export const extractImageText = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE_API_KEY) throw new Error("AI service not configured");
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY) throw new Error("AI service not configured: missing GEMINI_API_KEY");
 
-    const res = await fetch(LOVABLE_AI_URL, {
+    // Parse data URL: data:image/png;base64,XXXX
+    const match = /^data:([^;]+);base64,(.+)$/.exec(data.dataUrl);
+    if (!match) throw new Error("Invalid image data URL");
+    const mimeType = match[1];
+    const base64 = match[2];
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        temperature: 0.2,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You transcribe images for a study assistant. Return: (1) every readable line of text verbatim (preserve math, symbols, and layout as best you can); (2) a short 1-2 sentence description of any diagrams, charts, or figures. Output plain text only. No preamble.",
-          },
+        systemInstruction: {
+          parts: [
+            {
+              text: "You transcribe images for a study assistant. Return: (1) every readable line of text verbatim (preserve math, symbols, and layout as best you can); (2) a short 1-2 sentence description of any diagrams, charts, or figures. Output plain text only. No preamble.",
+            },
+          ],
+        },
+        contents: [
           {
             role: "user",
-            content: [
-              { type: "text", text: `Transcribe and briefly describe this image${data.name ? ` (${data.name})` : ""}.` },
-              { type: "image_url", image_url: { url: data.dataUrl } },
+            parts: [
+              { text: `Transcribe and briefly describe this image${data.name ? ` (${data.name})` : ""}.` },
+              { inline_data: { mime_type: mimeType, data: base64 } },
             ],
           },
         ],
+        generationConfig: { temperature: 0.2 },
       }),
     });
 
@@ -53,8 +58,11 @@ export const extractImageText = createServerFn({ method: "POST" })
       const t = await res.text().catch(() => "");
       throw new Error(`OCR failed: ${res.status} ${t.slice(0, 200)}`);
     }
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const text = json.choices?.[0]?.message?.content?.trim() ?? "";
+    const json = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const parts = json.candidates?.[0]?.content?.parts ?? [];
+    const text = parts.map((p) => p.text ?? "").join("").trim();
     return { text: text.slice(0, MAX_STORED_TEXT) };
   });
 
