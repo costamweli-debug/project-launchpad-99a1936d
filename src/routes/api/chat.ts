@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, generateText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createGeminiProvider } from "@/lib/ai-gateway.server";
 import type { Database } from "@/integrations/supabase/types";
 
 const GENERAL_SYSTEM = `You are ExamPass AI — a Smart Tutor for Namibian NSSCO & AS Level students. You behave like a top student guiding a peer to think better: clear, strategic, slightly strict, focused on real improvement. Never warm-fuzzy, never condescending, never rambling.
