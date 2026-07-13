@@ -47,9 +47,9 @@ When the user asks for a quiz (from a topic, PDF, or image):
 
 async function generateSmartTitle(apiKey: string, userMsg: string, assistantMsg: string): Promise<string | null> {
   try {
-    const google = createGoogleGenerativeAI({ apiKey });
+    const gemini = createGeminiProvider(apiKey);
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: gemini("gemini-2.0-flash"),
       system:
         "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
       prompt: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
