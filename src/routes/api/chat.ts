@@ -206,7 +206,7 @@ export const Route = createFileRoute("/api/chat")({
                 // Smart AI title on the first exchange
                 const meta = thread as { _firstTurn?: boolean; _userText?: string };
                 if (meta._firstTurn && meta._userText) {
-                  const smart = await generateSmartTitle(LOVABLE_API_KEY, meta._userText, text);
+                  const smart = await generateSmartTitle(GEMINI_API_KEY, meta._userText, text);
                   if (smart) {
                     await supabase
                       .from("chat_threads")
