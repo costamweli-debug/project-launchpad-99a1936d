@@ -9,6 +9,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { Menu, X } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -130,38 +131,45 @@ function RootShell({ children }: { children: ReactNode }) {
 function AppNav({ user }: { user: { email?: string } | null }) {
   const navigate = useNavigate();
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
+    setMenuOpen(false);
     await supabase.auth.signOut();
     router.invalidate();
     navigate({ to: "/", replace: true });
   };
 
+  const navLinks: { to: "/dashboard" | "/chat" | "/progress" | "/rank" | "/pdf"; label: string; accent?: boolean }[] = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/chat", label: "Chat", accent: true },
+    { to: "/progress", label: "Progress" },
+    { to: "/rank", label: "Rank" },
+    { to: "/pdf", label: "PDF" },
+  ];
+
   return (
     <nav className="sticky top-0 z-50 border-b backdrop-blur-md" style={{ borderColor: "var(--color-border)", backgroundColor: "color-mix(in oklab, var(--color-background) 80%, transparent)" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2.5 leading-none">
+        <Link to="/" className="flex items-center gap-2.5 leading-none" onClick={() => setMenuOpen(false)}>
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center [&_svg]:h-full [&_svg]:w-full [&_svg]:block" dangerouslySetInnerHTML={{ __html: logoSvg }} />
           <span className="text-lg font-bold leading-none" style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>ExamPass AI</span>
         </Link>
-        <div className="flex items-center gap-3">
-          {user ? (
-            <>
-              <Link to="/dashboard" className="hidden text-sm font-medium transition-colors hover:opacity-80 sm:inline" style={{ color: "var(--color-foreground)" }}>
-                Dashboard
-              </Link>
-              <Link to="/chat" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: "var(--color-mint)" }}>
-                Chat
-              </Link>
-              <Link to="/progress" className="hidden text-sm font-medium transition-colors hover:opacity-80 sm:inline" style={{ color: "var(--color-foreground)" }}>
-                Progress
-              </Link>
-              <Link to="/rank" className="hidden text-sm font-medium transition-colors hover:opacity-80 md:inline" style={{ color: "var(--color-foreground)" }}>
-                Rank
-              </Link>
-              <Link to="/pdf" className="hidden text-sm font-medium transition-colors hover:opacity-80 md:inline" style={{ color: "var(--color-foreground)" }}>
-                PDF
-              </Link>
+
+        {user ? (
+          <>
+            {/* Desktop nav */}
+            <div className="hidden items-center gap-3 md:flex">
+              {navLinks.map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className="text-sm font-medium transition-colors hover:opacity-80"
+                  style={{ color: l.accent ? "var(--color-mint)" : "var(--color-foreground)" }}
+                >
+                  {l.label}
+                </Link>
+              ))}
               <ThemeToggle />
               <button
                 onClick={handleSignOut}
@@ -170,21 +178,65 @@ function AppNav({ user }: { user: { email?: string } | null }) {
               >
                 Sign Out
               </button>
-            </>
-          ) : (
-            <>
+            </div>
+
+            {/* Mobile trigger */}
+            <div className="flex items-center gap-2 md:hidden">
               <ThemeToggle />
-              <Link
-                to="/auth"
-                className="rounded-md px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
-                style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+              <button
+                type="button"
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((o) => !o)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border"
+                style={{ borderColor: "var(--color-border)", color: "var(--color-foreground)", backgroundColor: "var(--color-surface)" }}
               >
-                Get Started
-              </Link>
-            </>
-          )}
-        </div>
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              to="/auth"
+              className="rounded-md px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+              style={{ backgroundColor: "var(--color-primary)", color: "var(--color-primary-foreground)" }}
+            >
+              Get Started
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* Mobile dropdown */}
+      {user && menuOpen && (
+        <div
+          className="border-t md:hidden"
+          style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-background)" }}
+        >
+          <div className="mx-auto flex max-w-7xl flex-col px-4 py-2">
+            {navLinks.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:opacity-80"
+                style={{ color: l.accent ? "var(--color-mint)" : "var(--color-foreground)" }}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <button
+              onClick={handleSignOut}
+              className="mt-1 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors hover:opacity-90"
+              style={{ backgroundColor: "var(--color-surface)", color: "var(--color-foreground)" }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
