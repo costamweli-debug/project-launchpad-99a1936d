@@ -49,7 +49,7 @@ async function generateSmartTitle(apiKey: string, userMsg: string, assistantMsg:
   try {
     const gemini = createGeminiProvider(apiKey);
     const { text } = await generateText({
-      model: gemini("gemini-2.0-flash"),
+      model: gemini("gemini-3.1-flash-lite"),
       system:
         "Generate a concise chat title (3-6 words, no quotes, no punctuation at end, Title Case) that captures the topic of this conversation. Respond with ONLY the title.",
       prompt: `User: ${userMsg.slice(0, 400)}\n\nAssistant: ${assistantMsg.slice(0, 400)}`,
@@ -179,7 +179,7 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           const gemini = createGeminiProvider(GEMINI_API_KEY);
-          const model = gemini("gemini-2.0-flash");
+          const model = gemini("gemini-3.1-flash-lite");
 
           const systemPrompt = attachmentContext
             ? `${GENERAL_SYSTEM}\n\nThe user has attached the following file(s). Use them as authoritative context for this turn. When they ask to summarize, explain, or generate a quiz, base your answer on the attachment content.\n\n${attachmentContext}`
