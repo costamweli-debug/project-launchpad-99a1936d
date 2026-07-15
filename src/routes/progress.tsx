@@ -7,9 +7,10 @@ import { getProgress, getQuizSessions } from "@/lib/quiz.functions";
 import { getRank, SUBJECTS } from "@/lib/subjects";
 
 export const Route = createFileRoute("/progress")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw (await import("@tanstack/react-router")).redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: () => ({
