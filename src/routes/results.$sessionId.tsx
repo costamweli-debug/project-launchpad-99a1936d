@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,9 +9,10 @@ import { explainAnswer } from "@/lib/ai.functions";
 import type { QuizQuestion } from "@/lib/quiz.functions";
 
 export const Route = createFileRoute("/results/$sessionId")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: () => ({
