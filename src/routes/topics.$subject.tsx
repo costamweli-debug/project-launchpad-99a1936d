@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MessageSquare, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +8,10 @@ import { useLevel } from "@/hooks/use-level";
 import { LevelToggle } from "@/components/LevelToggle";
 
 export const Route = createFileRoute("/topics/$subject")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: ({ params }) => ({

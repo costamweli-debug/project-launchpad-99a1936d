@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,9 +10,10 @@ import { saveQuizSession } from "@/lib/quiz.functions";
 import { SUBJECTS, getRank } from "@/lib/subjects";
 
 export const Route = createFileRoute("/pdf")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: () => ({

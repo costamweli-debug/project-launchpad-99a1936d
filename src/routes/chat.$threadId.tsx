@@ -82,9 +82,9 @@ function fileToDataUrl(file: File): Promise<string> {
 
 
 export const Route = createFileRoute("/chat/$threadId")({
+  ssr: false,
   head: ({ params }) => ({ meta: [{ title: `Chat — ExamPass AI` }] }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
   },

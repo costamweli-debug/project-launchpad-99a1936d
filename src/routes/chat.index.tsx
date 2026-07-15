@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { createThread, listThreads } from "@/lib/chat.functions";
 
 export const Route = createFileRoute("/chat/")({
+  ssr: false,
   head: () => ({ meta: [{ title: "Chat — ExamPass AI" }] }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
     try {

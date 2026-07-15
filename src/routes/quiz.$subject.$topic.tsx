@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Loader2, Zap, BookOpen } from "lucide-react";
@@ -12,9 +12,10 @@ import { useLevel } from "@/hooks/use-level";
 import { toast, Toaster } from "sonner";
 
 export const Route = createFileRoute("/quiz/$subject/$topic")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: ({ params }) => ({

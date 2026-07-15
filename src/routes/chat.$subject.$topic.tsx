@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Send, ArrowLeft, Loader2, Sparkles } from "lucide-react";
@@ -11,9 +11,10 @@ import { useLevel } from "@/hooks/use-level";
 type Message = { role: "user" | "assistant"; content: string };
 
 export const Route = createFileRoute("/chat/$subject/$topic")({
+  ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw new Error("Unauthorized");
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: ({ params }) => ({
