@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/progress")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw (await import("@tanstack/react-router")).redirect({ to: "/auth" });
+    if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
   head: () => ({
