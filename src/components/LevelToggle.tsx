@@ -2,7 +2,7 @@ import { useLevel } from "@/hooks/use-level";
 import type { Level } from "@/lib/curriculum.functions";
 
 export function LevelToggle({ compact = false }: { compact?: boolean }) {
-  const { level, setLevel, isSaving } = useLevel();
+  const { level, setLevel } = useLevel();
   const levels: Level[] = ["NSSCO", "AS"];
 
   return (
@@ -25,9 +25,8 @@ export function LevelToggle({ compact = false }: { compact?: boolean }) {
             type="button"
             role="tab"
             aria-selected={active}
-            disabled={isSaving}
             onClick={() => !active && setLevel(l)}
-            className="rounded-lg px-3 py-1.5 text-sm font-semibold transition-all disabled:opacity-60"
+            className="rounded-lg px-3 py-1.5 text-sm font-semibold transition-all"
             style={{
               backgroundColor: active ? "var(--color-mint)" : "transparent",
               color: active ? "var(--color-background)" : "var(--color-foreground)",
