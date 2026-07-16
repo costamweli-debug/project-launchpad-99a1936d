@@ -8,6 +8,7 @@ import { Toaster, toast } from "sonner";
 import { summarizePDF, generateQuizFromPDF } from "@/lib/ai.functions";
 import { saveQuizSession } from "@/lib/quiz.functions";
 import { SUBJECTS, getRank } from "@/lib/subjects";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/pdf")({
   ssr: false,
@@ -98,6 +99,7 @@ function PDFPage() {
         });
         refetch();
       }
+      trackEvent("pdf_uploaded", { filename: file.name, size: file.size });
       toast.success("PDF extracted! Now summarize or generate a quiz.");
     } catch (e) {
       console.error(e);

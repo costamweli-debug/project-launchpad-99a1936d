@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, User, ArrowRight, GraduationCap, Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -37,10 +38,12 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        trackEvent("sign_up", { method: "email" });
         toast.success("Account created! Check your email to verify.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        trackEvent("login", { method: "email" });
         navigate({ to: "/dashboard", replace: true });
       }
     } catch (err: unknown) {
@@ -54,6 +57,11 @@ function AuthPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      try {
+        window.sessionStorage.setItem("pending_oauth_login", "google");
+      } catch {
+        // ignore
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

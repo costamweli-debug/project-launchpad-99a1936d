@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "sonner";
 import logoSvg from "@/assets/exampass-logo.svg?raw";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -243,7 +244,21 @@ function AppNav({ user }: { user: { email?: string } | null }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   const [user, setUser] = useState<{ email?: string } | null>(null);
+
+  useEffect(() => {
+    initAnalytics();
+    if (typeof window !== "undefined") {
+      trackPageView(window.location.pathname + window.location.search);
+    }
+    const unsub = router.subscribe("onResolved", (e) => {
+      const path = e.toLocation?.pathname ?? "";
+      const search = e.toLocation?.searchStr ? `?${e.toLocation.searchStr}` : "";
+      trackPageView(path + search);
+    });
+    return () => unsub();
+  }, [router]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -254,6 +269,19 @@ function RootComponent() {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         setUser(session?.user ? { email: session.user.email || undefined } : null);
         queryClient.invalidateQueries();
+        if (event === "SIGNED_IN" && typeof window !== "undefined") {
+          try {
+            const pending = window.sessionStorage.getItem("pending_oauth_login");
+            if (pending) {
+              window.sessionStorage.removeItem("pending_oauth_login");
+              import("@/lib/analytics").then(({ trackEvent }) =>
+                trackEvent("login", { method: pending }),
+              );
+            }
+          } catch {
+            // ignore
+          }
+        }
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         queryClient.clear();

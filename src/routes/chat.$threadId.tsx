@@ -28,6 +28,7 @@ import {
 } from "@/lib/chat.functions";
 import { createAttachment, extractImageText } from "@/lib/attachments.functions";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
 
@@ -292,6 +293,7 @@ function ChatPage() {
     setInput("");
     setPending([]);
     try {
+      trackEvent("ai_chat_sent", { attachments: readyIds.length });
       await sendMessage({ text: messageText });
     } finally {
       pendingIdsRef.current = [];

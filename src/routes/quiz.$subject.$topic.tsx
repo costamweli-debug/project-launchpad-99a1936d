@@ -10,6 +10,7 @@ import { listSubjects, listTopics } from "@/lib/curriculum.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useLevel } from "@/hooks/use-level";
 import { toast, Toaster } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/quiz/$subject/$topic")({
   ssr: false,
@@ -54,6 +55,7 @@ function QuizPage() {
   useEffect(() => {
     if (!subject || !topic) return;
     setLoading(true);
+    trackEvent("start_quiz", { subject: subject.name, topic: topic.name, level });
     generateFn({ data: { subject: subject.name, topic: topic.name, level } })
       .then((res) => setQuestions(res.questions))
       .catch((err) => {
@@ -94,6 +96,14 @@ function QuizPage() {
             rankLevel: rank.name,
             level,
           },
+        });
+        trackEvent("finish_quiz", {
+          subject: subject.name,
+          topic: topic.name,
+          score,
+          total: questions.length,
+          percentage,
+          level,
         });
         navigate({ to: "/results/$sessionId", params: { sessionId: result.session.id } });
       } catch (e) {

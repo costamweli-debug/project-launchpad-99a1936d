@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getMyLevel, setMyLevel, type Level } from "@/lib/curriculum.functions";
+import { trackEvent } from "@/lib/analytics";
 
 export function useLevel() {
   const fetchLevel = useServerFn(getMyLevel);
@@ -27,6 +28,9 @@ export function useLevel() {
       if (ctx?.previous) qc.setQueryData(["my-level"], ctx.previous);
       console.error("[useLevel] setMyLevel failed", err);
       toast.error("Couldn't switch level. Please try again.");
+    },
+    onSuccess: (_data, level) => {
+      trackEvent("level_switched", { level });
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["my-level"] });
