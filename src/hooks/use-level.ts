@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getMyLevel, setMyLevel, type Level } from "@/lib/curriculum.functions";
+import { trackEvent } from "@/lib/analytics";
 
 export function useLevel() {
   const fetchLevel = useServerFn(getMyLevel);
