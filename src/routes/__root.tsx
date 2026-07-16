@@ -269,6 +269,19 @@ function RootComponent() {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         setUser(session?.user ? { email: session.user.email || undefined } : null);
         queryClient.invalidateQueries();
+        if (event === "SIGNED_IN" && typeof window !== "undefined") {
+          try {
+            const pending = window.sessionStorage.getItem("pending_oauth_login");
+            if (pending) {
+              window.sessionStorage.removeItem("pending_oauth_login");
+              import("@/lib/analytics").then(({ trackEvent }) =>
+                trackEvent("login", { method: pending }),
+              );
+            }
+          } catch {
+            // ignore
+          }
+        }
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         queryClient.clear();
