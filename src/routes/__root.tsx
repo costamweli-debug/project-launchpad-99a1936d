@@ -244,7 +244,21 @@ function AppNav({ user }: { user: { email?: string } | null }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   const [user, setUser] = useState<{ email?: string } | null>(null);
+
+  useEffect(() => {
+    initAnalytics();
+    if (typeof window !== "undefined") {
+      trackPageView(window.location.pathname + window.location.search);
+    }
+    const unsub = router.subscribe("onResolved", (e) => {
+      const path = e.toLocation?.pathname ?? "";
+      const search = e.toLocation?.searchStr ? `?${e.toLocation.searchStr}` : "";
+      trackPageView(path + search);
+    });
+    return () => unsub();
+  }, [router]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
