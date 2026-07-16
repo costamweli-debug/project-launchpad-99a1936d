@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Lock, User, ArrowRight, GraduationCap, Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
