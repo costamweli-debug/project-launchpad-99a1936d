@@ -71,6 +71,7 @@ function ChatPage() {
     setMessages(newMessages);
     setInput("");
     setLoading(true);
+    trackEvent("ai_chat_sent", { subject: subject.name, topic: topic.name, level });
     try {
       const res = await chatFn({
         data: {
