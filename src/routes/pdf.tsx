@@ -8,6 +8,7 @@ import { Toaster, toast } from "sonner";
 import { summarizePDF, generateQuizFromPDF } from "@/lib/ai.functions";
 import { saveQuizSession } from "@/lib/quiz.functions";
 import { SUBJECTS, getRank } from "@/lib/subjects";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/pdf")({
   ssr: false,
