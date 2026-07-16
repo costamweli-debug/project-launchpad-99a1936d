@@ -293,6 +293,7 @@ function ChatPage() {
     setInput("");
     setPending([]);
     try {
+      trackEvent("ai_chat_sent", { attachments: readyIds.length });
       await sendMessage({ text: messageText });
     } finally {
       pendingIdsRef.current = [];
