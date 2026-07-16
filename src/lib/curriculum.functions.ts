@@ -90,7 +90,8 @@ export const getMyLevel = createServerFn({ method: "GET" })
       .select("level")
       .eq("user_id", context.userId)
       .maybeSingle();
-    const level = (data?.level as Level | undefined) ?? "NSSCO";
+    const raw = data?.level;
+    const level: Level = raw === "AS" ? "AS" : "NSSCO";
     return { level };
   });
 
@@ -98,10 +99,31 @@ export const setMyLevel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { level: Level }) => z.object({ level: levelSchema }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    // Use upsert so the row is created if the profile is missing, and returns
+    // the updated row so we can verify the write actually persisted.
+    const { data: rows, error } = await context.supabase
       .from("profiles")
-      .update({ level: data.level })
-      .eq("user_id", context.userId);
-    if (error) throw error;
-    return { level: data.level };
+      .upsert(
+        { user_id: context.userId, level: data.level },
+        { onConflict: "user_id" },
+      )
+      .select("user_id, level");
+    if (error) {
+      console.error("[setMyLevel] upsert failed", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(
+        `setMyLevel failed: ${error.message}${error.code ? ` (${error.code})` : ""}${
+          error.hint ? ` Hint: ${error.hint}` : ""
+        }`,
+      );
+    }
+    if (!rows || rows.length === 0) {
+      console.error("[setMyLevel] upsert affected 0 rows", { userId: context.userId });
+      throw new Error("setMyLevel failed: no rows written (RLS or missing profile)");
+    }
+    return { level: rows[0].level as Level };
   });
