@@ -7,6 +7,7 @@ import { chatWithSubject } from "@/lib/ai.functions";
 import { listSubjects, listTopics } from "@/lib/curriculum.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useLevel } from "@/hooks/use-level";
+import { trackEvent } from "@/lib/analytics";
 
 type Message = { role: "user" | "assistant"; content: string };
 
