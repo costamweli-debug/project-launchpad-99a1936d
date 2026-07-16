@@ -57,6 +57,11 @@ function AuthPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      try {
+        window.sessionStorage.setItem("pending_oauth_login", "google");
+      } catch {
+        // ignore
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
