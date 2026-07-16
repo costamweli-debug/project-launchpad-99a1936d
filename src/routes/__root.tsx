@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Toaster } from "sonner";
 import logoSvg from "@/assets/exampass-logo.svg?raw";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 function NotFoundComponent() {
   return (
