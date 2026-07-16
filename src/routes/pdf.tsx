@@ -99,6 +99,7 @@ function PDFPage() {
         });
         refetch();
       }
+      trackEvent("pdf_uploaded", { filename: file.name, size: file.size });
       toast.success("PDF extracted! Now summarize or generate a quiz.");
     } catch (e) {
       console.error(e);
