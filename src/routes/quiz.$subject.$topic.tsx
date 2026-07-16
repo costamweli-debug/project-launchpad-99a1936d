@@ -97,6 +97,14 @@ function QuizPage() {
             level,
           },
         });
+        trackEvent("finish_quiz", {
+          subject: subject.name,
+          topic: topic.name,
+          score,
+          total: questions.length,
+          percentage,
+          level,
+        });
         navigate({ to: "/results/$sessionId", params: { sessionId: result.session.id } });
       } catch (e) {
         console.error(e);
