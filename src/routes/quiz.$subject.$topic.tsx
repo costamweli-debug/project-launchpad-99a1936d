@@ -55,6 +55,7 @@ function QuizPage() {
   useEffect(() => {
     if (!subject || !topic) return;
     setLoading(true);
+    trackEvent("start_quiz", { subject: subject.name, topic: topic.name, level });
     generateFn({ data: { subject: subject.name, topic: topic.name, level } })
       .then((res) => setQuestions(res.questions))
       .catch((err) => {
