@@ -10,6 +10,7 @@ import { listSubjects, listTopics } from "@/lib/curriculum.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useLevel } from "@/hooks/use-level";
 import { toast, Toaster } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/quiz/$subject/$topic")({
   ssr: false,
