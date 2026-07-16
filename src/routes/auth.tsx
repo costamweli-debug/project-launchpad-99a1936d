@@ -38,10 +38,12 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        trackEvent("sign_up", { method: "email" });
         toast.success("Account created! Check your email to verify.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        trackEvent("login", { method: "email" });
         navigate({ to: "/dashboard", replace: true });
       }
     } catch (err: unknown) {
