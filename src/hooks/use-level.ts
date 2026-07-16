@@ -29,6 +29,9 @@ export function useLevel() {
       console.error("[useLevel] setMyLevel failed", err);
       toast.error("Couldn't switch level. Please try again.");
     },
+    onSuccess: (_data, level) => {
+      trackEvent("level_switched", { level });
+    },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["my-level"] });
       qc.invalidateQueries({ queryKey: ["topics"] });
