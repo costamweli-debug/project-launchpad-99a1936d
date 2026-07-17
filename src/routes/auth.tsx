@@ -114,6 +114,41 @@ function AuthPage() {
         </div>
 
         <div className="rounded-2xl border p-6 sm:p-8" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}>
+          {/* Segmented Sign In / Sign Up tabs — highest-priority affordance for new users */}
+          <div
+            role="tablist"
+            aria-label="Authentication mode"
+            className="mb-6 grid grid-cols-2 gap-1 rounded-xl p-1"
+            style={{ backgroundColor: "var(--color-background)", border: "1px solid var(--color-border)" }}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "login"}
+              onClick={() => switchMode("login")}
+              className="rounded-lg py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: mode === "login" ? "var(--color-primary)" : "transparent",
+                color: mode === "login" ? "var(--color-primary-foreground)" : "var(--color-muted-foreground)",
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "signup"}
+              onClick={() => switchMode("signup")}
+              className="rounded-lg py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: mode === "signup" ? "var(--color-primary)" : "transparent",
+                color: mode === "signup" ? "var(--color-primary-foreground)" : "var(--color-muted-foreground)",
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -134,6 +169,30 @@ function AuthPage() {
             <span className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>or with email</span>
             <div className="h-px flex-1" style={{ backgroundColor: "var(--color-border)" }} />
           </div>
+
+          {authError && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border p-3 text-sm"
+              style={{
+                borderColor: "oklch(0.7 0.18 30 / 0.4)",
+                backgroundColor: "oklch(0.7 0.18 30 / 0.1)",
+                color: "var(--color-foreground)",
+              }}
+            >
+              <p className="mb-2">{authError.message}</p>
+              {authError.suggestSignup && (
+                <button
+                  type="button"
+                  onClick={() => switchMode("signup")}
+                  className="text-sm font-semibold underline"
+                  style={{ color: "var(--color-mint)" }}
+                >
+                  Create an account instead →
+                </button>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
