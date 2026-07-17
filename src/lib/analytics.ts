@@ -43,7 +43,17 @@ export function initAnalytics(): void {
     window.gtag = gtag;
     gtag("js", new Date());
     // SPA: disable auto page_view so we can send manually on route change.
-    gtag("config", ga4Id, { send_page_view: false });
+    // Enable GA4 DebugView when ?debug_mode=true is present in the URL.
+    let debugMode = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      debugMode = params.get("debug_mode") === "true";
+    } catch {
+      // ignore
+    }
+    const config: Record<string, unknown> = { send_page_view: false };
+    if (debugMode) config.debug_mode = true;
+    gtag("config", ga4Id, config);
 
     const s = document.createElement("script");
     s.async = true;

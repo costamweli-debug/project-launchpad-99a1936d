@@ -22,10 +22,17 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<{ message: string; suggestSignup: boolean } | null>(null);
+
+  const switchMode = (next: "login" | "signup") => {
+    setMode(next);
+    setAuthError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError(null);
 
     try {
       if (mode === "signup") {
@@ -48,7 +55,21 @@ function AuthPage() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An error occurred";
-      toast.error(message);
+      // Supabase returns a generic "Invalid login credentials" for both
+      // wrong password and non-existent email (by design, to avoid user enumeration).
+      // Show a helpful inline hint suggesting sign-up as the likely next step.
+      const isInvalidCreds =
+        mode === "login" &&
+        /invalid login credentials|invalid credentials/i.test(message);
+      if (isInvalidCreds) {
+        setAuthError({
+          message:
+            "We couldn't sign you in. If you don't have an account yet, sign up — otherwise double-check your password.",
+          suggestSignup: true,
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -93,6 +114,41 @@ function AuthPage() {
         </div>
 
         <div className="rounded-2xl border p-6 sm:p-8" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-card)" }}>
+          {/* Segmented Sign In / Sign Up tabs — highest-priority affordance for new users */}
+          <div
+            role="tablist"
+            aria-label="Authentication mode"
+            className="mb-6 grid grid-cols-2 gap-1 rounded-xl p-1"
+            style={{ backgroundColor: "var(--color-background)", border: "1px solid var(--color-border)" }}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "login"}
+              onClick={() => switchMode("login")}
+              className="rounded-lg py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: mode === "login" ? "var(--color-primary)" : "transparent",
+                color: mode === "login" ? "var(--color-primary-foreground)" : "var(--color-muted-foreground)",
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "signup"}
+              onClick={() => switchMode("signup")}
+              className="rounded-lg py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: mode === "signup" ? "var(--color-primary)" : "transparent",
+                color: mode === "signup" ? "var(--color-primary-foreground)" : "var(--color-muted-foreground)",
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -113,6 +169,30 @@ function AuthPage() {
             <span className="text-xs" style={{ color: "var(--color-muted-foreground)" }}>or with email</span>
             <div className="h-px flex-1" style={{ backgroundColor: "var(--color-border)" }} />
           </div>
+
+          {authError && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border p-3 text-sm"
+              style={{
+                borderColor: "oklch(0.7 0.18 30 / 0.4)",
+                backgroundColor: "oklch(0.7 0.18 30 / 0.1)",
+                color: "var(--color-foreground)",
+              }}
+            >
+              <p className="mb-2">{authError.message}</p>
+              {authError.suggestSignup && (
+                <button
+                  type="button"
+                  onClick={() => switchMode("signup")}
+                  className="text-sm font-semibold underline"
+                  style={{ color: "var(--color-mint)" }}
+                >
+                  Create an account instead →
+                </button>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
@@ -175,7 +255,7 @@ function AuthPage() {
           <p className="mt-6 text-center text-sm" style={{ color: "var(--color-muted-foreground)" }}>
             {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+              onClick={() => switchMode(mode === "login" ? "signup" : "login")}
               className="font-semibold transition-colors hover:opacity-80"
               style={{ color: "var(--color-mint)" }}
             >
