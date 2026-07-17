@@ -255,7 +255,7 @@ function AuthPage() {
           <p className="mt-6 text-center text-sm" style={{ color: "var(--color-muted-foreground)" }}>
             {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+              onClick={() => switchMode(mode === "login" ? "signup" : "login")}
               className="font-semibold transition-colors hover:opacity-80"
               style={{ color: "var(--color-mint)" }}
             >
