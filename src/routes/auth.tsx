@@ -22,10 +22,17 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<{ message: string; suggestSignup: boolean } | null>(null);
+
+  const switchMode = (next: "login" | "signup") => {
+    setMode(next);
+    setAuthError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError(null);
 
     try {
       if (mode === "signup") {
@@ -48,7 +55,21 @@ function AuthPage() {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "An error occurred";
-      toast.error(message);
+      // Supabase returns a generic "Invalid login credentials" for both
+      // wrong password and non-existent email (by design, to avoid user enumeration).
+      // Show a helpful inline hint suggesting sign-up as the likely next step.
+      const isInvalidCreds =
+        mode === "login" &&
+        /invalid login credentials|invalid credentials/i.test(message);
+      if (isInvalidCreds) {
+        setAuthError({
+          message:
+            "We couldn't sign you in. If you don't have an account yet, sign up — otherwise double-check your password.",
+          suggestSignup: true,
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
