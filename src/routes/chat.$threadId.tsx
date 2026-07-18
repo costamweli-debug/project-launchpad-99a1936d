@@ -5,8 +5,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Trash2, Pencil, Send, MessageSquare, Loader2, Search, Menu, Sparkles, Folder, FolderPlus, ChevronDown, ChevronRight, FolderInput, X, Tag as TagIcon, Paperclip, FileText, Image as ImageIcon, Pin, PinOff, Wand2, BookOpen, HelpCircle, Zap } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { RichMarkdown } from "@/components/RichMarkdown";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createThread,
@@ -1138,7 +1137,7 @@ function MessageBubble({ message, streaming = false }: { message: UIMessage; str
           text || <span className="opacity-50">…</span>
         ) : text ? (
           <div className="chat-markdown">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            <RichMarkdown>{text}</RichMarkdown>
             {streaming && <span className="typing-caret" aria-hidden="true" />}
           </div>
         ) : (

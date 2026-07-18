@@ -9,6 +9,7 @@ import { summarizePDF, generateQuizFromPDF } from "@/lib/ai.functions";
 import { saveQuizSession } from "@/lib/quiz.functions";
 import { SUBJECTS, getRank } from "@/lib/subjects";
 import { trackEvent } from "@/lib/analytics";
+import { RichMarkdown } from "@/components/RichMarkdown";
 
 export const Route = createFileRoute("/pdf")({
   ssr: false,
@@ -237,7 +238,7 @@ function PDFPage() {
             {summary && (
               <div className="mt-4 rounded-xl border p-4 animate-fade-in-up" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-background)" }}>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>AI Summary</p>
-                <div className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: "var(--color-foreground)" }}>{summary}</div>
+                <RichMarkdown className="chat-markdown text-sm leading-relaxed">{summary}</RichMarkdown>
               </div>
             )}
           </div>

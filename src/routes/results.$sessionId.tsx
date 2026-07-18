@@ -7,6 +7,7 @@ import { Check, X, Trophy, ArrowRight, MessageSquare, Sparkles, Loader2, Home } 
 import { getRank } from "@/lib/subjects";
 import { explainAnswer } from "@/lib/ai.functions";
 import type { QuizQuestion } from "@/lib/quiz.functions";
+import { RichMarkdown } from "@/components/RichMarkdown";
 
 export const Route = createFileRoute("/results/$sessionId")({
   ssr: false,
@@ -211,7 +212,7 @@ function QuestionReview({
               ) : (
                 <>
                   <p className="mb-2 text-xs font-medium uppercase tracking-wider" style={{ color: "var(--color-mint)" }}>AI Explanation</p>
-                  <p>{aiExplanation || question.explanation}</p>
+                  <RichMarkdown className="chat-markdown">{aiExplanation || question.explanation}</RichMarkdown>
                 </>
               )}
             </div>

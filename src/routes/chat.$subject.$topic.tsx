@@ -8,6 +8,7 @@ import { listSubjects, listTopics } from "@/lib/curriculum.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useLevel } from "@/hooks/use-level";
 import { trackEvent } from "@/lib/analytics";
+import { RichMarkdown } from "@/components/RichMarkdown";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -114,14 +115,14 @@ function ChatPage() {
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}>
               <div
-                className="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap"
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user" ? "whitespace-pre-wrap" : ""}`}
                 style={{
                   backgroundColor: msg.role === "user" ? "var(--color-primary)" : "var(--color-card)",
                   color: msg.role === "user" ? "var(--color-primary-foreground)" : "var(--color-foreground)",
                   border: msg.role === "assistant" ? `1px solid var(--color-border)` : "none",
                 }}
               >
-                {msg.content}
+                {msg.role === "assistant" ? <RichMarkdown className="chat-markdown">{msg.content}</RichMarkdown> : msg.content}
               </div>
             </div>
           ))}

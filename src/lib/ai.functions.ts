@@ -145,14 +145,16 @@ Correct answer: "${data.correctAnswer}"
 
 ${lg.explain}
 
-Respond in markdown using this exact structure:
+Respond in clean GitHub-flavoured markdown. Use these sections, in this order, but ONLY include the ones that genuinely apply to this question:
 
-**Answer** — one line: why the correct answer is correct.
-**Explanation** — 2–4 numbered steps of reasoning.
-**Key points** — 2–3 bullets to memorize.
-**Exam tips** — one common mistake + one strategy or shortcut.
+**Topic** — one line naming the concept.
+**Key Concept** — 1–2 plain-English sentences a beginner can understand.
+**Formula** — only if a formula is involved. Wrap every formula in LaTeX math delimiters: inline as $E = mc^2$, block as $$F = ma$$. Never write raw LaTeX like \\text{} or \\mu outside math delimiters.
+**Symbol Meanings** — only if the formula has symbols. Bullet list, e.g. "- $m$ = mass (kg)".
+**Worked Example** — 2–4 numbered steps showing the reasoning for this specific question.
+**Exam Tip** — one short practical tip or common mistake.
 
-Tone: clear, strategic, slightly strict. No praise, no emojis, no filler. Max 200 words.`;
+Rules: No emojis, no praise, no filler. Skip sections that don't apply (e.g. History/English answers usually skip Formula & Symbol Meanings). Max 220 words.`;
 
     const explanation = await callAI([
       { role: "system", content: `You are ExamPass AI: a strict, brilliant mentor for ${lg.label} students. Sharp, precise, never warm.` },
@@ -186,16 +188,20 @@ ${lg.style}
 - Adapt depth to difficulty (easy → tight; hard → full step-by-step with assumptions).
 - Stay strictly within ${data.subject} → ${data.topic}. If the user drifts, reply exactly: "Focus. That question is outside your selected topic." and stop.
 
-## Response skeleton (markdown)
-**Answer** — 1–2 lines.
-**Explanation** — numbered steps or reasoning.
-**Key points** — 2–4 bullets to memorize.
-**Exam tips** — one common mistake + one strategy (when relevant).
-**Next** — ONE optional follow-up: "Want a harder version?" or "Try: …".
+## Response skeleton (clean GitHub-flavoured markdown)
+Include ONLY the sections that genuinely apply. Never force a section that doesn't fit.
+
+**Topic** — one line naming what's being asked.
+**Key Concept** — 1–2 plain-English sentences a beginner understands.
+**Formula** — ONLY when a formula applies (Physics, Chemistry, Maths, Accounting calcs). Wrap every formula in LaTeX math delimiters: inline as $v = u + at$, block as $$E_k = \\tfrac{1}{2}mv^2$$. Never write raw LaTeX like \\text{} or \\mu outside math delimiters.
+**Symbol Meanings** — ONLY when the formula has symbols. Bullet list, e.g. "- $m$ = mass (kg)".
+**Worked Example** — 2–4 numbered steps for a concrete case (skip if the question is pure theory).
+**Exam Tip** — one short practical tip or common mistake.
 
 ## Rules
 - No emojis. No filler. No praise.
-- Keep it tight. Never a wall of text.`;
+- Non-formula subjects (History, English, Geography theory, etc.) skip Formula & Symbol Meanings entirely.
+- Preserve lists, tables and headings. Keep it tight.`;
 
     const response = await callAI([
       { role: "system", content: systemPrompt },
@@ -212,7 +218,7 @@ export const summarizePDF = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const lg = levelGuidance(data.level);
-    const prompt = `Summarize this ${data.subject} material into clean, exam-focused key points for a ${lg.label} student. Structured bullets only. No filler. End with one short "Strategic focus:" line.\n\n${data.text.slice(0, 8000)}`;
+    const prompt = `Summarize this ${data.subject} material into clean, exam-focused notes for a ${lg.label} student. Use markdown with short headings and bullets. If formulas appear, render them in LaTeX math delimiters ($...$ inline, $$...$$ block) — never raw \\text{} or unescaped symbols. End with one short "Strategic focus:" line.\n\n${data.text.slice(0, 8000)}`;
 
     const summary = await callAI([
       { role: "system", content: `You are ExamPass AI: a strict, brilliant ${lg.label} mentor. Calm, precise.` },
