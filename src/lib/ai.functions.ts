@@ -218,10 +218,24 @@ export const summarizePDF = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const lg = levelGuidance(data.level);
-    const prompt = `Summarize this ${data.subject} material into clean, exam-focused notes for a ${lg.label} student. Use markdown with short headings and bullets. If formulas appear, render them in LaTeX math delimiters ($...$ inline, $$...$$ block) — never raw \\text{} or unescaped symbols. End with one short "Strategic focus:" line.\n\n${data.text.slice(0, 8000)}`;
+    const prompt = `Summarize this ${data.subject} material into clean, exam-focused notes for a ${lg.label} student.
+
+Output rules — follow exactly:
+- Clean GitHub-flavoured markdown: short headings (##), tight bullets, tables where useful.
+- Every formula MUST be wrapped in LaTeX math delimiters: inline as $v = u + at$, block as $$E_k = \\tfrac{1}{2}mv^2$$.
+- Never emit raw LaTeX outside math delimiters. No \\text{}, no bare \\frac, \\times, \\mu, \\Delta, ^, or _ sitting in prose.
+- Always put a space between a LaTeX command and the next identifier: write $\\Delta T$ and $F \\times d$, never $\\DeltaT$ or $F\\timesd$.
+- Never double-wrap: write $\\frac{a}{b}$, never $\\frac\${a}{b}. Never leave a dangling $ or $$.
+- Where a formula has symbols, add a short "Symbol meanings" bullet list (e.g. "- $m$ = mass (kg)").
+- Skip formula/symbol sections entirely for non-formula subjects (History, English, Geography theory, etc.).
+- No emojis, no praise, no filler.
+- End with one short "Strategic focus:" line.
+
+Material:
+${data.text.slice(0, 8000)}`;
 
     const summary = await callAI([
-      { role: "system", content: `You are ExamPass AI: a strict, brilliant ${lg.label} mentor. Calm, precise.` },
+      { role: "system", content: `You are ExamPass AI: a strict, brilliant ${lg.label} mentor. Calm, precise. You never emit raw or malformed LaTeX — every formula is properly delimited so it renders in KaTeX.` },
       { role: "user", content: prompt },
     ]);
 

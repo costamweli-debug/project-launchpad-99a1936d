@@ -294,6 +294,28 @@
 .chat-markdown th { background: color-mix(in oklab, var(--color-mint) 10%, transparent); font-weight: 700; }
 .chat-markdown hr { margin: 0.8rem 0; border: none; border-top: 1px dashed var(--color-border); }
 
+/* KaTeX: the global `* { border-color }` rule hides fraction bars, sqrt
+   lines, and matrix rules on dark backgrounds. Force them to currentColor. */
+.katex .frac-line,
+.katex .overline .overline-line,
+.katex .underline .underline-line,
+.katex .hline,
+.katex .hdashline,
+.katex .rule,
+.katex .sqrt > .root,
+.katex .sqrt .sqrt-line,
+.katex .mord.overline .overline-line,
+.katex .mord.underline .underline-line,
+.katex .stretchy,
+.katex .overline-line,
+.katex .underline-line {
+  border-color: currentColor !important;
+  background-color: currentColor;
+  color: var(--color-foreground);
+}
+.katex, .katex * { border-color: currentColor; }
+.chat-markdown .katex-display { margin: 0.6rem 0; overflow-x: auto; overflow-y: hidden; }
+
 .typing-caret {
   display: inline-block;
   width: 6px;

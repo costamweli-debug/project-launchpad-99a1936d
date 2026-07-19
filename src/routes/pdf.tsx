@@ -115,6 +115,9 @@ function PDFPage() {
     setSummarizing(true);
     try {
       const res = await summarizeFn({ data: { text: extractedText, subject } });
+      // TEMP DEBUG: raw AI output before RichMarkdown preprocessing
+      console.log("[PDF Summary] RAW AI response:\n", res.summary);
+      console.log("[PDF Summary] RAW (JSON-escaped):", JSON.stringify(res.summary));
       setSummary(res.summary);
     } catch (e) {
       toast.error("Couldn't summarize PDF.");
