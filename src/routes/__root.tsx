@@ -141,9 +141,10 @@ function AppNav({ user }: { user: { email?: string } | null }) {
     navigate({ to: "/", replace: true });
   };
 
-  const navLinks: { to: "/dashboard" | "/chat" | "/progress" | "/rank" | "/pdf"; label: string; accent?: boolean }[] = [
+  const navLinks: { to: "/dashboard" | "/chat" | "/scan" | "/progress" | "/rank" | "/pdf"; label: string; accent?: boolean }[] = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/chat", label: "Chat", accent: true },
+    { to: "/scan", label: "Scan" },
     { to: "/progress", label: "Progress" },
     { to: "/rank", label: "Rank" },
     { to: "/pdf", label: "PDF" },

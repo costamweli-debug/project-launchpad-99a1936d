@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as RankRouteImport } from './routes/rank'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as PdfRouteImport } from './routes/pdf'
@@ -24,6 +25,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as QuizSubjectTopicRouteImport } from './routes/quiz.$subject.$topic'
 import { Route as ChatSubjectTopicRouteImport } from './routes/chat.$subject.$topic'
 
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankRoute = RankRouteImport.update({
   id: '/rank',
   path: '/rank',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/pdf': typeof PdfRouteWithChildren
   '/progress': typeof ProgressRoute
   '/rank': typeof RankRoute
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/pdf/quiz': typeof PdfQuizRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/scan'
     | '/api/chat'
     | '/chat/$threadId'
     | '/pdf/quiz'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/scan'
     | '/api/chat'
     | '/chat/$threadId'
     | '/pdf/quiz'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/pdf'
     | '/progress'
     | '/rank'
+    | '/scan'
     | '/api/chat'
     | '/chat/$threadId'
     | '/pdf/quiz'
@@ -202,6 +214,7 @@ export interface RootRouteChildren {
   PdfRoute: typeof PdfRouteWithChildren
   ProgressRoute: typeof ProgressRoute
   RankRoute: typeof RankRoute
+  ScanRoute: typeof ScanRoute
   ApiChatRoute: typeof ApiChatRoute
   ChatThreadIdRoute: typeof ChatThreadIdRoute
   ResultsSessionIdRoute: typeof ResultsSessionIdRoute
@@ -213,6 +226,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rank': {
       id: '/rank'
       path: '/rank'
@@ -331,6 +351,7 @@ const rootRouteChildren: RootRouteChildren = {
   PdfRoute: PdfRouteWithChildren,
   ProgressRoute: ProgressRoute,
   RankRoute: RankRoute,
+  ScanRoute: ScanRoute,
   ApiChatRoute: ApiChatRoute,
   ChatThreadIdRoute: ChatThreadIdRoute,
   ResultsSessionIdRoute: ResultsSessionIdRoute,

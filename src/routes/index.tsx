@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Brain,
   MessageSquare,
@@ -65,6 +66,12 @@ const STEPS = [
 const TOTAL_TOPICS = SUBJECTS.reduce((sum, s) => sum + s.topics.length, 0);
 
 export const Route = createFileRoute("/")({
+  // If already signed in, land straight on the dashboard (no landing-page flash).
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    const { data } = await supabase.auth.getSession();
+    if (data.session) throw redirect({ to: "/dashboard", replace: true });
+  },
   head: () => ({
     meta: [
       { title: "ExamPass AI — Pass NSSCO & AS Level with AI" },

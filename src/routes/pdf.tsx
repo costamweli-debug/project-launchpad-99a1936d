@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FileText, Upload, Sparkles, Zap, Loader2, BookOpen } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { summarizePDF, generateQuizFromPDF } from "@/lib/ai.functions";
+import { extractPdfPagesVision } from "@/lib/scan.functions";
 import { saveQuizSession } from "@/lib/quiz.functions";
 import { SUBJECTS, getRank } from "@/lib/subjects";
 import { trackEvent } from "@/lib/analytics";
@@ -24,30 +25,55 @@ export const Route = createFileRoute("/pdf")({
   component: PDFPage,
 });
 
-// Lightweight PDF text extraction using pdf.js from CDN
-async function extractTextFromPDF(file: File): Promise<string> {
+// Lightweight PDF text extraction using pdf.js from CDN.
+// Also renders the first few pages to JPEG data URLs so a vision model can
+// read diagrams, graphs, and image-only questions the text layer misses.
+const MAX_VISION_PAGES = 6;
+
+async function loadPdfJs(): Promise<any> {
   // @ts-ignore
-  if (!window.pdfjsLib) {
-    await new Promise<void>((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-      script.onload = () => resolve();
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-    // @ts-ignore
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  }
+  if (window.pdfjsLib) return window.pdfjsLib;
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = () => resolve();
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  // @ts-ignore
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  // @ts-ignore
+  return window.pdfjsLib;
+}
+
+async function extractPdfTextAndPages(file: File): Promise<{ text: string; pageImages: string[] }> {
+  const pdfjsLib = await loadPdfJs();
   const buf = await file.arrayBuffer();
-  // @ts-ignore
-  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   let text = "";
+  const pageImages: string[] = [];
+  const visionPages = Math.min(pdf.numPages, MAX_VISION_PAGES);
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     text += content.items.map((item: { str: string }) => item.str).join(" ") + "\n\n";
+    if (i <= visionPages) {
+      try {
+        const viewport = page.getViewport({ scale: 1.4 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          pageImages.push(canvas.toDataURL("image/jpeg", 0.7));
+        }
+      } catch (err) {
+        console.warn(`PDF page ${i} render failed`, err);
+      }
+    }
   }
-  return text;
+  return { text, pageImages };
 }
 
 function PDFPage() {
@@ -65,6 +91,7 @@ function PDFPage() {
   const summarizeFn = useServerFn(summarizePDF);
   const quizFn = useServerFn(generateQuizFromPDF);
   const saveFn = useServerFn(saveQuizSession);
+  const visionFn = useServerFn(extractPdfPagesVision);
 
   const { data: docsData, refetch } = useQuery({
     queryKey: ["pdfs"],
@@ -89,18 +116,31 @@ function PDFPage() {
     setFilename(file.name);
     setSummary(null);
     try {
-      const text = await extractTextFromPDF(file);
-      setExtractedText(text);
+      const { text, pageImages } = await extractPdfTextAndPages(file);
+      let combined = text;
+      // Ask Gemini Vision to describe diagrams/handwritten questions on the
+      // first few pages, then merge that context with the extracted text.
+      if (pageImages.length > 0) {
+        try {
+          const vision = await visionFn({ data: { pages: pageImages } });
+          if (vision.text?.trim()) {
+            combined = `${text}\n\n--- VISION CONTEXT (diagrams, figures, handwriting) ---\n${vision.text}`;
+          }
+        } catch (err) {
+          console.warn("PDF vision pass failed; continuing with text only.", err);
+        }
+      }
+      setExtractedText(combined);
       const { data: userData } = await supabase.auth.getUser();
       if (userData.user) {
         await supabase.from("pdf_documents").insert({
           user_id: userData.user.id,
           filename: file.name,
-          extracted_text: text.slice(0, 50000),
+          extracted_text: combined.slice(0, 50000),
         });
         refetch();
       }
-      trackEvent("pdf_uploaded", { filename: file.name, size: file.size });
+      trackEvent("pdf_uploaded", { filename: file.name, size: file.size, visionPages: pageImages.length });
       toast.success("PDF extracted! Now summarize or generate a quiz.");
     } catch (e) {
       console.error(e);
@@ -115,9 +155,6 @@ function PDFPage() {
     setSummarizing(true);
     try {
       const res = await summarizeFn({ data: { text: extractedText, subject } });
-      // TEMP DEBUG: raw AI output before RichMarkdown preprocessing
-      console.log("[PDF Summary] RAW AI response:\n", res.summary);
-      console.log("[PDF Summary] RAW (JSON-escaped):", JSON.stringify(res.summary));
       setSummary(res.summary);
     } catch (e) {
       toast.error("Couldn't summarize PDF.");
